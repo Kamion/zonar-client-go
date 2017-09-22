@@ -22,16 +22,32 @@ func New(customer, username, password string) *Client {
 }
 
 func (c *Client) request(form url.Values) ([]byte, error) {
+	client := &http.Client{}
+
 	form.Add("username", c.Username)
 	form.Add("password", c.Password)
 	form.Add("customer", c.Customer)
 
 	req, err := http.NewRequest("POST", host, strings.NewReader(form.Encode()))
-	defer req.Body.Close()
-
 	if err != nil {
 		return nil, err
 	}
 
-	return ioutil.ReadAll(req.Body)
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Add("User-Agent", "Kamion Zonar-Client "+ClientVersion)
+
+	// dump, err := httputil.DumpRequest(req, true)
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	// log.Println(string(dump))
+
+	res, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	return ioutil.ReadAll(res.Body)
 }
